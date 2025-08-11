@@ -69,3 +69,31 @@ class ShortURLViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+class RedirectView(View):
+    """
+    redirection logic
+    """
+    def get(self, request, shortcode, *args, **kwargs):
+        Log("info", "handler", f"Redirect request received for shortcode: {shortcode}")
+        try:
+            url_object = ShortURL.objects.get(shortcode=shortcode)
+
+            if url_object.expires_at < timezone.now():
+                Log("warn", "handler", f"Expired shortcode '{shortcode}' was accessed.")
+                return HttpResponseGone("This link has expired.")
+
+            url_object.clicks += 1
+            url_object.save() #adds click count
+            
+            Click.objects.create(
+                short_url=url_object,
+                referrer=request.META.get('HTTP_REFERER'),
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            Log("info", "handler", f"Redirecting {shortcode} to {url_object.original_url}")
+            return HttpResponseRedirect(url_object.original_url)
+
+        except ShortURL.DoesNotExist:
+            Log("warn", "handler", f"non-existent shortcode '{shortcode}' was accessed.")
+            return HttpResponseNotFound("short link does not exist.")
