@@ -68,7 +68,8 @@ const ShortenerPage = () => {
       try {
         new URL(row.url);
       } catch (_) {
-        log('warn', 'validation', `invalid format: ${row.url}`);
+        const truncatedUrl = row.url.substring(0, 20);
+        log('warn', 'validation', `invalid format: ${truncatedUrl}`);
         return { id: row.id, error: 'invalid format.' };
       }
 
@@ -100,7 +101,8 @@ const ShortenerPage = () => {
         return { id: row.id, ...data };
 
       } catch (error) {
-        log('error', 'api', `Failed to shorten ${row.url}: ${error.message}`);
+        const truncatedUrl = row.url.substring(0, 20);
+        log('error', 'api', `Failed to shorten ${row.url}: ${truncatedUrl}`);
         return { id: row.id, error: error.message };
       }
     });
