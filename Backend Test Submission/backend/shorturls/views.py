@@ -28,6 +28,16 @@ class ShortURLViewSet(viewsets.ModelViewSet):
     serializer_class = ShortURLSerializer
     lookup_field = 'shortcode'
 
+    def retrieve(self, request, *args, **kwargs):
+        """
+        Overrides the default retrieve method to add logging.
+        """
+        shortcode = kwargs.get('shortcode')
+        Log("info", "handler", f"Statistics requested for shortcode: {shortcode}")
+        
+        return super().retrieve(request, *args, **kwargs)
+
+
     def create(self, request, *args, **kwargs):
         """
         custom create logic
