@@ -11,7 +11,7 @@ import random
 
 from .models import ShortURL, Click
 from .serailizers import ShortURLSerializer
-from backend.logger import Log 
+from logger import Log 
 
 def generate_unique_shortcode(length=6):
     """helper function to generate a unique shortcode"""
