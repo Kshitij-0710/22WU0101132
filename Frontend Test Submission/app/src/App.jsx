@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Container, Typography } from '@mui/material';
 import ShortenerPage from './views/shortnerpage';
+import StatsPage from './views/statspage.jsx';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         </Typography>
         <Routes>
           <Route path="/" element={<ShortenerPage />} />
+          <Route path="/stats" element={<StatsPage />} />
         </Routes>
       </Container>
     </Router>
