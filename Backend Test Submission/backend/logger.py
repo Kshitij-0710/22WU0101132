@@ -28,7 +28,7 @@ def Log(level: str, package: str, message: str):
     try:
         response = requests.post(LOG_API_URL, headers=headers, data=json.dumps(payload))
         
-        if response.status_code == 200:
+        if 200 <= response.status_code < 300:
             print(f"sending backend logs: [{level.upper()}] {message}")
         else:
             print(f"error sending the logs status: {response.status_code}, Response: {response.text}")
