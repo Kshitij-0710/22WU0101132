@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Card, CardContent, Typography, IconButton, CircularProgress, Link, Alert } from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import { Box, TextField, Button, Card, CardContent, Typography, CircularProgress, Link, Alert } from '@mui/material';
 import { useLogger } from '../logging/logger';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -8,7 +7,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000';
 
 const UrlInputRow = ({ id, value, onChange }) => {
   return (
-    <Box display="flex" gap={2} mb={2} alignItems="center">
+    <Box display="flex" flexDirection="column" gap={2} mb={2}>
       <TextField
         label="Original Long URL"
         variant="outlined"
@@ -21,7 +20,7 @@ const UrlInputRow = ({ id, value, onChange }) => {
       <TextField
         label="Custom Shortcode (Optional)"
         variant="outlined"
-        sx={{ width: '40%' }}
+        fullWidth
         name="shortcode"
         value={value.shortcode}
         onChange={(e) => onChange(id, e)}
@@ -30,7 +29,7 @@ const UrlInputRow = ({ id, value, onChange }) => {
         label="Validity (mins, optional)"
         variant="outlined"
         type="number"
-        sx={{ width: '30%' }}
+        fullWidth
         name="validity"
         value={value.validity}
         onChange={(e) => onChange(id, e)}
@@ -64,7 +63,6 @@ const ShortenerPage = () => {
     log('info', 'component', 'URL shortening started');
 
     const promises = urlRows.map(async (row) => {
-
       try {
         new URL(row.url);
       } catch (_) {
@@ -72,90 +70,74 @@ const ShortenerPage = () => {
         log('warn', 'validation', `invalid format: ${truncatedUrl}`);
         return { id: row.id, error: 'invalid format.' };
       }
-
       const body = { url: row.url };
       if (row.shortcode) body.shortcode = row.shortcode;
       if (row.validity) body.validity = parseInt(row.validity, 10);
-
       try {
         const response = await fetch(`${API_BASE_URL}/shorturls/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-
         const data = await response.json();
-
         if (!response.ok) {
           throw new Error(data.error || `HTTP error status: ${response.status}`);
         }
-
-        log('info', 'api', `successfully shortened ${row.url}`);
-
         const existingShortcodes = JSON.parse(localStorage.getItem('shortcodes') || '[]');
         const shortcode = data.shortLink.split('/').pop();
         if (!existingShortcodes.includes(shortcode)) {
           localStorage.setItem('shortcodes', JSON.stringify([...existingShortcodes, shortcode]));
         }
-
         return { id: row.id, ...data };
-
       } catch (error) {
-        const truncatedUrl = row.url.substring(0, 20);
-        log('error', 'api', `Failed to shorten ${row.url}: ${truncatedUrl}`);
+        log('error', 'api', `Failed to shorten ${row.url}: ${row.url.substring(0, 20)}`);
         return { id: row.id, error: error.message };
       }
     });
-
     const settledResults = await Promise.all(promises);
     setResults(settledResults.filter(Boolean));
     setLoading(false);
   };
 
   return (
-    <Card>
-      <CardContent>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Create Short URLs
-        </Typography>
-        <form onSubmit={handleSubmit}>
-          {urlRows.map(row => (
-            <UrlInputRow key={row.id} id={row.id} value={row} onChange={handleInputChange} />
-          ))}
-          <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-            <Button variant="outlined" onClick={addRow} disabled={urlRows.length >= 5} startIcon={<AddCircleOutlineIcon />}>
-              Add URL
-            </Button>
-            <Button component={RouterLink} to="/stats" sx={{ ml: 2 }}>
-              View Stats
-            </Button>
-            <Button type="submit" variant="contained" color="primary" size="large" disabled={loading}>
-              {loading ? <CircularProgress size={24} /> : 'Shorten'}
-            </Button>
-          </Box>
-        </form>
-
-        {results.length > 0 && (
-          <Box mt={4}>
-            <Typography variant="h6" gutterBottom>Results</Typography>
-            {results.map(result => (
-              <Box key={result.id} mb={2}>
-                {result.error ? (
-                  <Alert severity="error">Failed to shorten: {result.error}</Alert>
-                ) : (
-                  <Alert severity="success">
-                    Short Link: <Link href={result.shortLink} target="_blank" rel="noopener">{result.shortLink}</Link>
-                    {' - '}
-                    Expires at: {new Date(result.expiry).toLocaleString()}
-                  </Alert>
-                )}
-              </Box>
+    <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="60vh">
+      <Card sx={{ width: '100%', maxWidth: 400, p: 2, borderRadius: 2 }}>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            {urlRows.map(row => (
+              <UrlInputRow key={row.id} id={row.id} value={row} onChange={handleInputChange} />
             ))}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-
+            <Box display="flex" gap={2} mt={2}>
+              <Button variant="outlined" onClick={addRow} disabled={urlRows.length >= 5} fullWidth>
+                Add URL
+              </Button>
+              <Button component={RouterLink} to="/stats" fullWidth>
+                View Stats
+              </Button>
+              <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading}>
+                {loading ? <CircularProgress size={20} color="inherit" /> : 'Shorten'}
+              </Button>
+            </Box>
+          </form>
+          {results.length > 0 && (
+            <Box mt={3}>
+              <Typography variant="h6" gutterBottom sx={{ color: 'black' }}>Results</Typography>
+              {results.map(result => (
+                <Box key={result.id} mb={1}>
+                  {result.error ? (
+                    <Alert severity="error">Failed to shorten: {result.error}</Alert>
+                  ) : (
+                    <Alert severity="success">
+                      Short Link: <Link href={result.shortLink} target="_blank" rel="noopener">{result.shortLink}</Link> - Expires at: {new Date(result.expiry).toLocaleString()}
+                    </Alert>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 
